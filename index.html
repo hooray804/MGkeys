@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MobileGestalt Keys Explorer</title>
+  <style>
+    :root {
+      --primary: #0064e0;
+      --primary-deep: #0457cb;
+      --primary-soft: #e7f2ff;
+      --canvas: #ffffff;
+      --surface-soft: #f1f4f7;
+      --ink-deep: #0a1317;
+      --ink: #1c1e21;
+      --charcoal: #444950;
+      --slate: #4b4c4f;
+      --steel: #5d6c7b;
+      --hairline: #ced0d4;
+      --hairline-soft: #dee3e9;
+      --success: #31a24c;
+      --warning: #f7b928;
+      --critical: #e41e3f;
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-xxl: 32px;
+      --radius-full: 100px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Top Sticky Header */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--hairline-soft);
+      z-index: 100;
+      padding: 16px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink-deep);
+      letter-spacing: -0.5px;
+    }
+
+    .stats-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--steel);
+      background: var(--surface-soft);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+    }
+
+    /* Search & Filter Bar */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 44px;
+      background: var(--surface-soft);
+      border: 1px solid transparent;
+      border-radius: var(--radius-full);
+      padding: 0 20px 0 44px;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      background: var(--canvas);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 100, 224, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--steel);
+      pointer-events: none;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .pill-btn {
+      height: 38px;
+      padding: 0 18px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--hairline);
+      background: var(--canvas);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn:hover {
+      background: var(--surface-soft);
+    }
+
+    .pill-btn.active {
+      background: var(--ink-deep);
+      color: var(--canvas);
+      border-color: var(--ink-deep);
+    }
+
+    .select-dropdown {
+      height: 38px;
+      padding: 0 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--hairline);
+      background: var(--canvas);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* List Area */
+    .results-count {
+      margin: 24px 0 16px;
+      font-size: 14px;
+      color: var(--steel);
+      font-weight: 500;
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .key-card {
+      background: var(--canvas);
+      border: 1px solid var(--hairline-soft);
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .key-card:hover {
+      border-color: var(--hairline);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    @media (max-width: 600px) {
+      .key-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-main {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .deobfuscated-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink-deep);
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .obfuscated-hash {
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--steel);
+      background: var(--surface-soft);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      width: fit-content;
+      word-break: break-all;
+    }
+
+    .badges-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .badge-intro {
+      background: var(--primary-soft);
+      color: var(--primary-deep);
+    }
+
+    .badge-removed {
+      background: #fde8e8;
+      color: var(--critical);
+    }
+
+    .badge-reintroduced {
+      background: #fef4dc;
+      color: #925800;
+    }
+
+    .badge-sim {
+      background: #f1f4f7;
+      color: var(--slate);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .copy-btn {
+      height: 34px;
+      padding: 0 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--hairline);
+      background: var(--canvas);
+      color: var(--charcoal);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--surface-soft);
+      color: var(--ink-deep);
+    }
+
+    .copy-btn:active {
+      transform: scale(0.96);
+    }
+
+    .copy-btn.copied {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* Loading / Empty State */
+    .status-box {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--steel);
+      font-size: 16px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--hairline-soft);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="header-inner">
+        <div class="title-row">
+          <div>
+            <h1>MobileGestalt Keys</h1>
+            <p style="font-size: 13px; color: var(--steel);">iOS System Configuration Key Map & Lifecycle Viewer</p>
+          </div>
+          <div class="stats-badge" id="statsBadge">데이터 불러오는 중...</div>
+        </div>
+
+        <div class="controls-grid">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="키 이름(Deobfuscated) 또는 해시값으로 검색...">
+          </div>
+
+          <div class="filter-pills">
+            <button class="pill-btn active" data-filter="all">전체</button>
+            <button class="pill-btn" data-filter="active">활성 (Active)</button>
+            <button class="pill-btn" data-filter="removed">삭제됨 (Removed)</button>
+            <button class="pill-btn" data-filter="reintroduced">재도입됨</button>
+          </div>
+
+          <select id="versionSelect" class="select-dropdown">
+            <option value="all">모든 iOS 버전</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="results-count" id="resultsCount">검색 결과를 준비 중입니다...</div>
+    <div id="cardsContainer" class="cards-grid">
+      <div class="status-box">
+        <div class="spinner"></div>
+        파일을 파싱하고 있습니다...
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let rawItems = [];
+    let currentFilter = 'all';
+    let currentVersion = 'all';
+    let searchQuery = '';
+
+    // Python Dictionary 파싱 유틸리티 함수
+    function parsePythonDict(text, varName) {
+      const result = {};
+      const regexBlock = new RegExp(varName + "\\s*=\\s*\\{([\\s\\S]*?)\\n\\}", "m");
+      const match = text.match(regexBlock);
+      if (!match) return result;
+
+      const body = match[1];
+      // "Key": "Value" 또는 "Key": ["Val1", "Val2"] 패턴
+      const entryRegex = /"([^"]+)"\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\])/g;
+      let entry;
+      while ((entry = entryRegex.exec(body)) !== null) {
+        const k = entry[1];
+        let v = entry[2].trim();
+        if (v.startsWith('"') && v.endsWith('"')) {
+          result[k] = v.slice(1, -1).replace(/\\"/g, '"');
+        } else if (v.startsWith('[') && v.endsWith(']')) {
+          try {
+            result[k] = JSON.parse(v.replace(/'/g, '"'));
+          } catch(e) {
+            result[k] = [];
+          }
+        }
+      }
+      return result;
+    }
+
+    async function loadData() {
+      const container = document.getElementById('cardsContainer');
+      try {
+        const [deobfRes, versionsRes] = await Promise.all([
+          fetch('./deobfuscated.txt'),
+          fetch('./keys_versions.txt')
+        ]);
+
+        if (!deobfRes.ok || !versionsRes.ok) {
+          throw new Error('텍스트 파일을 찾을 수 없습니다. 파일 위치를 확인하세요.');
+        }
+
+        const deobfText = await deobfRes.text();
+        const versionsText = await versionsRes.text();
+
+        const keysDict = parsePythonDict(deobfText, 'keys');
+        const introDict = parsePythonDict(versionsText, 'KEY_IOS_VERSIONS');
+        const removedDict = parsePythonDict(versionsText, 'KEY_IOS_REMOVED');
+        const reintroducedDict = parsePythonDict(versionsText, 'KEY_IOS_REINTRODUCED');
+
+        // 모든 해시 취합
+        const allHashes = new Set([
+          ...Object.keys(keysDict),
+          ...Object.keys(introDict),
+          ...Object.keys(removedDict)
+        ]);
+
+        const versionsSet = new Set();
+
+        rawItems = Array.from(allHashes).map(hash => {
+          const name = keysDict[hash] || "Unknown Name";
+          const intro = introDict[hash] || null;
+          const removed = removedDict[hash] || null;
+          const reintroduced = reintroducedDict[hash] || null;
+
+          if (intro && intro !== 'sim' && intro !== 'unknown') versionsSet.add(intro);
+          if (removed) versionsSet.add(removed);
+
+          return {
+            hash,
+            name,
+            intro,
+            removed,
+            reintroduced,
+            isActive: !removed
+          };
+        });
+
+        // 이름 기준 오름차순 정렬
+        rawItems.sort((a, b) => a.name.localeCompare(b.name));
+
+        // 통계 갱신
+        const total = rawItems.length;
+        const activeCount = rawItems.filter(i => i.isActive).length;
+        document.getElementById('statsBadge').textContent = `총 ${total.toLocaleString()}개 키 (활성: ${activeCount.toLocaleString()})`;
+
+        // 버전 드롭다운 세팅
+        const sortedVersions = Array.from(versionsSet).sort((a, b) => parseFloat(a) - parseFloat(b));
+        const select = document.getElementById('versionSelect');
+        sortedVersions.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = `iOS ${v}`;
+          select.appendChild(opt);
+        });
+
+        render();
+      } catch (err) {
+        container.innerHTML = `
+          <div class="status-box" style="color: var(--critical);">
+            <p><strong>데이터 로드 실패</strong></p>
+            <p style="font-size: 13px; margin-top: 6px;">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function render() {
+      const container = document.getElementById('cardsContainer');
+      const resultsCountEl = document.getElementById('resultsCount');
+
+      const filtered = rawItems.filter(item => {
+        // 검색어 필터
+        if (searchQuery) {
+          const matchName = item.name.toLowerCase().includes(searchQuery);
+          const matchHash = item.hash.toLowerCase().includes(searchQuery);
+          if (!matchName && !matchHash) return false;
+        }
+
+        // 상태 필터 (pill)
+        if (currentFilter === 'active' && !item.isActive) return false;
+        if (currentFilter === 'removed' && item.isActive) return false;
+        if (currentFilter === 'reintroduced' && (!item.reintroduced || item.reintroduced.length === 0)) return false;
+
+        // 버전 필터
+        if (currentVersion !== 'all') {
+          const matchIntro = item.intro === currentVersion;
+          const matchRemoved = item.removed === currentVersion;
+          const matchReintro = Array.isArray(item.reintroduced) && item.reintroduced.includes(currentVersion);
+          if (!matchIntro && !matchRemoved && !matchReintro) return false;
+        }
+
+        return true;
+      });
+
+      resultsCountEl.textContent = `${filtered.length.toLocaleString()}개의 키가 표시됨`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="status-box">
+            일치하는 결과가 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      const displayItems = filtered.slice(0, 15000);
+
+      container.innerHTML = displayItems.map(item => `
+        <div class="key-card">
+          <div class="card-main">
+            <div class="deobfuscated-name">
+              <span>${item.name}</span>
+            </div>
+            <div>
+              <span class="obfuscated-hash">${item.hash}</span>
+            </div>
+            <div class="badges-row">
+              ${item.intro ? `<span class="badge ${item.intro === 'sim' ? 'badge-sim' : 'badge-intro'}">Introduced: iOS ${item.intro}</span>` : ''}
+              ${item.removed ? `<span class="badge badge-removed">Removed: iOS ${item.removed}</span>` : ''}
+              ${item.reintroduced ? `<span class="badge badge-reintroduced">Reintroduced: iOS ${item.reintroduced.join(', ')}</span>` : ''}
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="copy-btn" onclick="copyText('${item.name}', this)">이름 복사</button>
+            <button class="copy-btn" onclick="copyText('${item.hash}', this)">해시 복사</button>
+          </div>
+        </div>
+      `).join('');
+
+    }
+
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '완료!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 1200);
+      });
+    }
+
+    // 이벤트 리스너 등록
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      render();
+    });
+
+    document.querySelectorAll('.filter-pills .pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pills .pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        render();
+      });
+    });
+
+    document.getElementById('versionSelect').addEventListener('change', (e) => {
+      currentVersion = e.target.value;
+      render();
+    });
+
+    // 초기 실행
+    loadData();
+  </script>
+</body>
+</html>
